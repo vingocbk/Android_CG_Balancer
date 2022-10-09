@@ -23,11 +23,13 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -80,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     BluetoothGattCharacteristic mReadCharacteristic;
     List<BluetoothGattService> services;
     ImageView imgBleConnect, imgPositionCenter;
-    TextView txtDataLoadCell1, txtDataLoadCell2, txtDataLoadCell3;
+    TextView txtDataLoadCell1, txtDataLoadCell2, txtDataLoadCell3, txtTotalWeight;
     ProgressBar prbLoadingConnectBle;
 
     Button btnTareAllLoadCell, btnCalibrationFragment;
@@ -91,6 +93,25 @@ public class MainActivity extends AppCompatActivity {
     CheckBox cbCalibrationNoseTail, cbCalibrationMainsLeft, cbCalibrationMainsRight;
     EditText edtCalibrationWeight;
 
+    EditText edtNoseTailWeight, edtMainsLeftWeight, edtMainsRightWeight;
+    EditText edtDistanceZ, edtDistanceX, edtDistanceY;
+    Button btnCalculateCG;
+    TextView txtNoticeAddOrRemove, txtNotificationWeightRemove;
+
+    ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave;
+    TextView txtNotificationNoseTailHeavy;
+    //variable for save name motor
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
+
+    String NoseWeigh = "NoseWeigh";
+    String LeftWeight = "LeftWeight";
+    String RightWeight = "RightWeight";
+    String DistanceZ = "DistanceZ";
+    String DistanceX = "DistanceX";
+    String DistanceY = "DistanceY";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,9 +119,12 @@ public class MainActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
         Log.i(LogFunction, "onCreate");
-        bleCheck();
-        locationCheck();
+//        bleCheck();
+//        locationCheck();
         initLayout();
+        LoadDataBegin();
+
+
         imgBleConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -164,6 +188,59 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnCalculateCG.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(edtNoseTailWeight.getText().toString().equals("")
+                        || edtMainsLeftWeight.getText().toString().equals("")
+                        || edtMainsRightWeight.getText().toString().equals("")
+                        || edtDistanceZ.getText().toString().equals("")
+                        || edtDistanceX.getText().toString().equals("")
+                        || edtDistanceY.getText().toString().equals("")){
+                    Toast.makeText(MainActivity.this, "Fill Full the Information!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                editor.putInt(NoseWeigh, Integer.parseInt(edtNoseTailWeight.getText().toString()));
+                editor.putInt(LeftWeight, Integer.parseInt(edtMainsLeftWeight.getText().toString()));
+                editor.putInt(RightWeight, Integer.parseInt(edtMainsRightWeight.getText().toString()));
+                editor.putInt(DistanceZ, Integer.parseInt(edtDistanceZ.getText().toString()));
+                editor.putInt(DistanceX, Integer.parseInt(edtDistanceX.getText().toString()));
+                editor.putInt(DistanceZ, Integer.parseInt(edtDistanceY.getText().toString()));
+                editor.commit();
+                float weightRemoveOrAdd = 0;
+                float noseWeight = (float) Integer.parseInt(edtNoseTailWeight.getText().toString());
+                float leftWeight = (float) Integer.parseInt(edtMainsLeftWeight.getText().toString());
+                float rightWeight = (float) Integer.parseInt(edtMainsRightWeight.getText().toString());
+                float distanceZ = (float) Integer.parseInt(edtDistanceZ.getText().toString());
+                float distanceX = (float) Integer.parseInt(edtDistanceX.getText().toString());
+                float distanceY = (float) Integer.parseInt(edtDistanceY.getText().toString());
+                weightRemoveOrAdd = ((noseWeight*(distanceZ-distanceX) - (leftWeight+rightWeight)*distanceX))/(distanceY-distanceX);
+
+                txtTotalWeight.setText(String.valueOf((int)(noseWeight+leftWeight+rightWeight))+"g");
+                if(weightRemoveOrAdd > 0){
+                    imgArrayShowNoseHeave.setVisibility(View.VISIBLE);
+                    imgArrayShowTailHeave.setVisibility(View.INVISIBLE);
+                    txtNotificationNoseTailHeavy.setText("NOSE HEAVY");
+                    txtNoticeAddOrRemove.setText("Remove");
+                    txtNotificationWeightRemove.setText(String.valueOf((int)weightRemoveOrAdd));
+
+                }else if(weightRemoveOrAdd < 0){
+                    imgArrayShowNoseHeave.setVisibility(View.INVISIBLE);
+                    imgArrayShowTailHeave.setVisibility(View.VISIBLE);
+                    txtNotificationNoseTailHeavy.setText("TAIL HEAVY");
+                    txtNoticeAddOrRemove.setText("Add");
+                    txtNotificationWeightRemove.setText(String.valueOf(-(int)weightRemoveOrAdd));
+                }
+                else {
+                    imgArrayShowNoseHeave.setVisibility(View.INVISIBLE);
+                    imgArrayShowTailHeave.setVisibility(View.INVISIBLE);
+                    txtNotificationNoseTailHeavy.setText("The plane is balanced");
+                    txtNoticeAddOrRemove.setText("Remove");
+                    txtNotificationWeightRemove.setText(String.valueOf((int)weightRemoveOrAdd));
+                }
+            }
+        });
+
         ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) llPositionCenter.getLayoutParams();
         marginParams.setMargins(0, 0, 340, 0);
     }
@@ -195,6 +272,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    public void LoadDataBegin() {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = sharedPreferences.edit();
+        edtNoseTailWeight.setText(String.valueOf(sharedPreferences.getInt(NoseWeigh, 500)));
+        edtMainsLeftWeight.setText(String.valueOf(sharedPreferences.getInt(LeftWeight, 500)));
+        edtMainsRightWeight.setText(String.valueOf(sharedPreferences.getInt(RightWeight, 500)));
+        edtDistanceZ.setText(String.valueOf(sharedPreferences.getInt(DistanceZ, 500)));
+        edtDistanceX.setText(String.valueOf(sharedPreferences.getInt(DistanceX, 500)));
+        edtDistanceY.setText(String.valueOf(sharedPreferences.getInt(DistanceY, 1000)));
+        txtTotalWeight.setText(String.valueOf((int)(sharedPreferences.getInt(NoseWeigh, 500)
+                +sharedPreferences.getInt(LeftWeight, 500)+sharedPreferences.getInt(RightWeight, 500)))+"g");
+    }
+
     private void initLayout() {
         imgBleConnect = findViewById(R.id.imgBleConnect);
         txtDataLoadCell1 = findViewById(R.id.txtDataLoadCell1);
@@ -217,8 +308,19 @@ public class MainActivity extends AppCompatActivity {
         llPositionCenter = findViewById(R.id.llPositionCenter);
         rlCalibration = findViewById(R.id.rlCalibration);
 
-
-
+        edtNoseTailWeight = findViewById(R.id.edtNoseTailWeight);
+        edtMainsLeftWeight = findViewById(R.id.edtMainsLeftWeight);
+        edtMainsRightWeight = findViewById(R.id.edtMainsRightWeight);
+        edtDistanceZ = findViewById(R.id.edtDistanceZ);
+        edtDistanceX = findViewById(R.id.edtDistanceX);
+        edtDistanceY = findViewById(R.id.edtDistanceY);
+        btnCalculateCG = findViewById(R.id.btnCalculateCG);
+        imgArrayShowNoseHeave = findViewById(R.id.imgArrayShowNoseHeave);
+        imgArrayShowTailHeave = findViewById(R.id.imgArrayShowTailHeave);
+        txtNotificationNoseTailHeavy = findViewById(R.id.txtNotificationNoseTailHeavy);
+        txtNoticeAddOrRemove = findViewById(R.id.txtNoticeAddOrRemove);
+        txtNotificationWeightRemove = findViewById(R.id.txtNotificationWeightRemove);
+        txtTotalWeight = findViewById(R.id.txtTotalWeight);
     }
 
     protected void scanDeviceBleToConnect(){

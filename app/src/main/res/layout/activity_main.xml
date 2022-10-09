@@ -10,6 +10,7 @@
         android:id="@+id/imgBleConnect"
         android:layout_width="50dp"
         android:layout_height="50dp"
+        android:visibility="gone"
         android:layout_centerHorizontal="true"
         android:background="@mipmap/ble_disconnect" />
     <LinearLayout
@@ -19,7 +20,7 @@
         android:layout_height="match_parent">
         <LinearLayout
             android:layout_weight="1"
-            android:weightSum="6"
+            android:weightSum="5"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -46,9 +47,25 @@
                     <TextView
                         android:layout_gravity="center"
                         android:id="@+id/txtDataLoadCell1"
+                        android:visibility="gone"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="500 g"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                    <EditText
+                        android:id="@+id/edtNoseTailWeight"
+                        android:hint="500"
+                        android:inputType="number"
+                        android:gravity="center"
+                        android:textSize="20sp"
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="g"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -79,7 +96,23 @@
                         android:id="@+id/txtDataLoadCell2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:visibility="gone"
                         android:text="500 g"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                    <EditText
+                        android:id="@+id/edtMainsLeftWeight"
+                        android:hint="500"
+                        android:inputType="number"
+                        android:gravity="center"
+                        android:textSize="20sp"
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="g"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -107,10 +140,26 @@
                     android:layout_height="match_parent">
                     <TextView
                         android:layout_gravity="center"
+                        android:visibility="gone"
                         android:id="@+id/txtDataLoadCell3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="500 g"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                    <EditText
+                        android:id="@+id/edtMainsRightWeight"
+                        android:hint="500"
+                        android:inputType="number"
+                        android:gravity="center"
+                        android:textSize="20sp"
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="g"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -151,6 +200,7 @@
             <LinearLayout
                 android:gravity="center"
                 android:weightSum="2"
+                android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
@@ -211,7 +261,7 @@
                 android:id="@+id/llPositionCenter"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-
+                android:visibility="gone"
                 android:layout_alignParentBottom="true"
                 android:gravity="center_horizontal">
 
@@ -240,13 +290,17 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
+                    android:id="@+id/imgArrayShowNoseHeave"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:visibility="invisible"
                     android:layout_marginStart="100dp"
                     android:background="@mipmap/arrow_down" />
                 <ImageView
+                    android:id="@+id/imgArrayShowTailHeave"
                     android:layout_alignParentEnd="true"
                     android:layout_marginEnd="100dp"
+                    android:visibility="invisible"
                     android:background="@mipmap/arrow_down"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
@@ -267,6 +321,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
                 <TextView
+                    android:id="@+id/txtNoticeAddOrRemove"
                     android:text="Remove"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
@@ -275,7 +330,7 @@
                     android:layout_gravity="center"
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
-                    android:text="352"
+                    android:text="0"
                     android:textSize="20sp"
                     android:textColor="@color/teal_700"
                     android:layout_width="wrap_content"
@@ -393,24 +448,9 @@
                 android:gravity="center"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:text="Tricycle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-                <CheckBox
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:text="Bicycle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
                 <Button
-                    android:id="@+id/edtSaveDistanceXYZ"
-                    android:text="Save"
-                    android:layout_marginLeft="50dp"
+                    android:id="@+id/btnCalculateCG"
+                    android:text="calculator"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
