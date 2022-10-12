@@ -42,23 +42,37 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 @TargetApi(21)
 public class MainActivity extends AppCompatActivity {
@@ -111,7 +125,17 @@ public class MainActivity extends AppCompatActivity {
     String DistanceX = "DistanceX";
     String DistanceY = "DistanceY";
 
-
+    private List<dataSaved> listDataSaved;
+    private ListView lvDataSaved;
+    Button btnSaveData, btnLoadData;
+    RelativeLayout rlDataSavedFragment;
+    ImageView imgBackFragmentDataSaved;
+    ProgressBar prbLoadingUrl;
+    String loadDataFail = "Can't Load Data";
+    String cookie = "";
+    String urlLogging = "https://avystore.com/appapi/user/generate_auth_cookie?username=0936156099&password=12345";
+    String urlListDevice = "https://avystore.com/appapi/user/user_list_devices?cookie=" + cookie + "&room_id=23";
+    OkHttpClient client = new OkHttpClient();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -124,67 +148,57 @@ public class MainActivity extends AppCompatActivity {
         initLayout();
         LoadDataBegin();
 
-
-        imgBleConnect.setOnClickListener(new View.OnClickListener() {
+        btnLoadData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mGatt == null || mCustomService == null) {
-                    prbLoadingConnectBle.setVisibility(View.VISIBLE);
-                    scanDeviceBleToConnect();
-                } else {
-                    imgBleConnect.setBackgroundResource(R.mipmap.ble_disconnect);
-                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                rlDataSavedFragment.setVisibility(View.VISIBLE);
+                prbLoadingUrl.setVisibility(View.VISIBLE);
+                String data = loadDataFail;
+                if(cookie.equals("")){
+                    try {
+                        data = getUrl(urlLogging);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                    mGatt.disconnect();
-                    mGatt.close();
-                    mGatt = null;
+//                    if(!data.equals(loadDataFail)){
+//                        try {
+//                            JSONObject root = new JSONObject(data);
+//                            cookie = root.getString("cookie");
+//                            Toast.makeText(MainActivity.this, cookie, Toast.LENGTH_SHORT).show();
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }else{
+//                        Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
+//                    }
                 }
+                prbLoadingUrl.setVisibility(View.INVISIBLE);
+
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Request request = new Request.Builder()
+//                                .url(urlLogging)
+//                                .build();
+//                        try{
+//                            Response response = client.newCall(request).execute();
+//                            Toast.makeText(MainActivity.this,response.body().string().toString(), Toast.LENGTH_SHORT).show();
+////                                return;
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                });
             }
         });
 
-        btnCalibrationFragment.setOnClickListener(new View.OnClickListener() {
+        imgBackFragmentDataSaved.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                rlCalibration.setVisibility(View.VISIBLE);
-            }
-        });
-
-        btnCalibrationCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                cbCalibrationNoseTail.setChecked(false);
-                cbCalibrationMainsLeft.setChecked(false);
-                cbCalibrationMainsRight.setChecked(false);
-                edtCalibrationWeight.getText().clear();
-                rlCalibration.setVisibility(View.INVISIBLE);
-            }
-        });
-
-        cbCalibrationNoseTail.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(b){
-                    cbCalibrationMainsLeft.setChecked(false);
-                    cbCalibrationMainsRight.setChecked(false);
-                }
-            }
-        });
-        cbCalibrationMainsLeft.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(b){
-                    cbCalibrationNoseTail.setChecked(false);
-                    cbCalibrationMainsRight.setChecked(false);
-                }
-            }
-        });
-        cbCalibrationMainsRight.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(b){
-                    cbCalibrationNoseTail.setChecked(false);
-                    cbCalibrationMainsLeft.setChecked(false);
-                }
+                rlDataSavedFragment.setVisibility(View.INVISIBLE);
+                prbLoadingUrl.setVisibility(View.INVISIBLE);
             }
         });
 
@@ -284,6 +298,11 @@ public class MainActivity extends AppCompatActivity {
         edtDistanceY.setText(String.valueOf(sharedPreferences.getInt(DistanceY, 1000)));
         txtTotalWeight.setText(String.valueOf((int)(sharedPreferences.getInt(NoseWeigh, 500)
                 +sharedPreferences.getInt(LeftWeight, 500)+sharedPreferences.getInt(RightWeight, 500)))+"g");
+
+        listDataSaved = new ArrayList<>();
+//        listDataSaved.add(new dataSaved(1, "Lập Trình Java", 2, 3, 4));
+        dataSavedAdapter adapter = new dataSavedAdapter(this, R.layout.list_view_data_saved, listDataSaved);
+        lvDataSaved.setAdapter(adapter);
     }
 
     private void initLayout() {
@@ -321,7 +340,52 @@ public class MainActivity extends AppCompatActivity {
         txtNoticeAddOrRemove = findViewById(R.id.txtNoticeAddOrRemove);
         txtNotificationWeightRemove = findViewById(R.id.txtNotificationWeightRemove);
         txtTotalWeight = findViewById(R.id.txtTotalWeight);
+
+        lvDataSaved = findViewById(R.id.lvDataSaved);
+        btnSaveData = findViewById(R.id.btnSaveData);
+        btnLoadData = findViewById(R.id.btnLoadData);
+        rlDataSavedFragment = findViewById(R.id.rlDataSavedFragment);
+        imgBackFragmentDataSaved = findViewById(R.id.imgBackFragmentDataSaved);
+        prbLoadingUrl = findViewById(R.id.prbLoadingUrl);
     }
+
+    public String getUrl(String url) throws IOException, InterruptedException {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        final String[] dataReturn = {loadDataFail};
+        Log.i("responseBodyData", dataReturn[0]);
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                try {
+                    ResponseBody responseBody = response.body();
+                    if (!response.isSuccessful()) {
+                        throw new IOException("Unexpected code " + response);
+                    }
+                    dataReturn[0] = responseBody.string();
+//                    Log.i("responseBodyData", responseBody.string());
+//                    Toast.makeText(MainActivity.this, responseBody.string(), Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Log.i("responseBodyData", dataReturn[0]);
+//                Toast.makeText(MainActivity.this, dataReturn[0], Toast.LENGTH_SHORT).show();
+            }
+        });
+//        try (Response response = client.newCall(request).execute()) {
+//            return response.body().string();
+//        }
+        return dataReturn[0];
+    }
+
+
 
     protected void scanDeviceBleToConnect(){
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {

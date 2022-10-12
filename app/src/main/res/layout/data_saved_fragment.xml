@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@mipmap/background_3"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/imgBackFragmentDataSaved"
+        android:background="@mipmap/icon_back"
+        android:layout_width="50dp"
+        android:layout_height="50dp"/>
+    <ListView
+        android:id="@+id/lvDataSaved"
+        android:layout_below="@+id/imgBackFragmentDataSaved"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <ProgressBar
+        android:id="@+id/prbLoadingUrl"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</RelativeLayout>

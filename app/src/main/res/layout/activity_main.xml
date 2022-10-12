@@ -449,8 +449,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
                 <Button
+                    android:id="@+id/btnSaveData"
+                    android:text="Save"
+                    android:layout_marginRight="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <Button
                     android:id="@+id/btnCalculateCG"
                     android:text="calculator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <Button
+                    android:id="@+id/btnLoadData"
+                    android:layout_marginLeft="10dp"
+                    android:text="Load"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
@@ -479,6 +491,15 @@
             android:layout_centerInParent="true"
             android:layout_margin="20dp"/>
     </RelativeLayout>
-
+    <RelativeLayout
+        android:id="@+id/rlDataSavedFragment"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <include
+            layout="@layout/data_saved_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
 
 </RelativeLayout>
