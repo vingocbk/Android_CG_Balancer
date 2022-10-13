@@ -232,17 +232,34 @@
 
             <LinearLayout
                 android:layout_weight="1"
+                android:weightSum="2"
                 android:gravity="center"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-                <TextView
-                    android:id="@+id/txtNotificationNoseTailHeavy"
-                    android:layout_gravity="center"
-                    android:text="NOSE HEAVY"
-                    android:textSize="20sp"
-                    android:textColor="@color/teal_700"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                <LinearLayout
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <TextView
+                        android:id="@+id/txtShowNameDataSaved"
+                        android:textSize="20sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <TextView
+                        android:id="@+id/txtNotificationNoseTailHeavy"
+                        android:layout_gravity="center"
+                        android:textSize="20sp"
+                        android:textColor="@color/teal_700"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>
@@ -490,6 +507,23 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:layout_margin="20dp"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/rlSendRequestSaveName"
+        android:visibility="gone"
+        android:background="#CB3C3C3C"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include
+            layout="@layout/set_saved_fragment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp" />
     </RelativeLayout>
     <RelativeLayout
         android:id="@+id/rlDataSavedFragment"

@@ -36,6 +36,8 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -45,6 +47,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -117,9 +120,6 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave;
     TextView txtNotificationNoseTailHeavy;
-    //variable for save name motor
-    SharedPreferences sharedPreferences;
-    SharedPreferences.Editor editor;
 
     String NoseWeigh = "NoseWeigh";
     String LeftWeight = "LeftWeight";
@@ -131,14 +131,19 @@ public class MainActivity extends AppCompatActivity {
     private List<dataSaved> listDataSaved;
     private ListView lvDataSaved;
     Button btnSaveData, btnLoadData;
-    RelativeLayout rlDataSavedFragment;
+    RelativeLayout rlDataSavedFragment, rlSendRequestSaveName;
     ImageView imgBackFragmentDataSaved;
     ProgressBar prbLoadingUrl;
+    TextView txtShowNameDataSaved;
+    Spinner spnShowDataSaved;
+    EditText edtNewNameSaved;
+    Button btnSendSavedNameRequest, btnCancelSavedNameRequest;
     String loadDataFail = "Can't Load Data";
     String cookie = "";
     String roomID   = "23";
     String urlLogging = "https://avystore.com/appapi/user/generate_auth_cookie?username=0936156099&password=12345";
     OkHttpClient client = new OkHttpClient();
+    ArrayAdapter spnAdapter;
     boolean flagGetCookie = false;
     boolean flagGetDataSaved = false;
     boolean flagSetDataSaved = false;
@@ -149,8 +154,6 @@ public class MainActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
         Log.i(LogFunction, "onCreate");
-//        bleCheck();
-//        locationCheck();
         initLayout();
         LoadDataBegin();
 
@@ -166,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
                         .setType(MultipartBody.FORM)
                         .addFormDataPart("cookie", cookie)
                         .addFormDataPart("room_id", roomID)
-                        .addFormDataPart("in", "1")
-                        .addFormDataPart("id", "1")
                         .build();
                     postUrl(urlListDevice, requestBody);
                 }
@@ -187,6 +188,85 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        lvDataSaved.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                dataSaved data = listDataSaved.get(i);
+                rlDataSavedFragment.setVisibility(View.INVISIBLE);
+                txtShowNameDataSaved.setText(data.getName());
+                edtDistanceX.setText(String.valueOf(data.getX()));
+                edtDistanceY.setText(String.valueOf(data.getY()));
+                edtDistanceZ.setText(String.valueOf(data.getZ()));
+            }
+        });
+
+        btnSaveData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(txtShowNameDataSaved.getText().toString().equals("") || listDataSaved.size() == 0){
+                    Toast.makeText(MainActivity.this,"Load Data Before Save",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                rlSendRequestSaveName.setVisibility(View.VISIBLE);
+                int sub_device_id = 0;
+                spnAdapter.clear();
+                for(int i = 0; i < listDataSaved.size(); i++){
+                    dataSaved data = listDataSaved.get(i);
+                    if(data.getName().equals(txtShowNameDataSaved.getText().toString())){
+                        edtNewNameSaved.setText(txtShowNameDataSaved.getText().toString());
+                        sub_device_id = i;
+                    }
+                    spnAdapter.add(data.getName());
+                }
+                spnShowDataSaved.setSelection(sub_device_id);
+            }
+        });
+        btnSendSavedNameRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(edtNewNameSaved.getText().toString().equals("")){
+                    Toast.makeText(MainActivity.this, "Fill New Name", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                prbLoadingUrl.setVisibility(View.VISIBLE);
+                String urlListDevice = "https://avystore.com/appapi/user/user_update_device";
+                JSONObject imgPathObject = new JSONObject();
+                JSONObject dataObject = new JSONObject();
+                try {
+                    imgPathObject.put("name", edtNewNameSaved.getText().toString());
+                    imgPathObject.put("X", Integer.parseInt(edtDistanceX.getText().toString()));
+                    imgPathObject.put("Y", Integer.parseInt(edtDistanceY.getText().toString()));
+                    imgPathObject.put("Z", Integer.parseInt(edtDistanceZ.getText().toString()));
+                    dataObject.put("room_id", roomID);
+                    dataObject.put("device_id", "VP6");
+                    dataObject.put("img_path", imgPathObject.toString());
+                    dataObject.put("name", "ngoc");
+                    dataObject.put("status", "off");
+                    dataObject.put("sub_device_id", spnShowDataSaved.getSelectedItemPosition()+1);
+                    dataObject.put("feature", 0);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                flagSetDataSaved = true;
+                RequestBody requestBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("cookie", cookie)
+                        .addFormDataPart("device_value", dataObject.toString())
+                        .build();
+                Log.i("responseBodyData", dataObject.toString());
+                postUrl(urlListDevice, requestBody);
+            }
+        });
+
+        btnCancelSavedNameRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                prbLoadingUrl.setVisibility(View.INVISIBLE);
+                rlSendRequestSaveName.setVisibility(View.INVISIBLE);
+            }
+        });
+
         btnCalculateCG.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -199,13 +279,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Fill Full the Information!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                editor.putInt(NoseWeigh, Integer.parseInt(edtNoseTailWeight.getText().toString()));
-                editor.putInt(LeftWeight, Integer.parseInt(edtMainsLeftWeight.getText().toString()));
-                editor.putInt(RightWeight, Integer.parseInt(edtMainsRightWeight.getText().toString()));
-                editor.putInt(DistanceZ, Integer.parseInt(edtDistanceZ.getText().toString()));
-                editor.putInt(DistanceX, Integer.parseInt(edtDistanceX.getText().toString()));
-                editor.putInt(DistanceZ, Integer.parseInt(edtDistanceY.getText().toString()));
-                editor.commit();
                 float weightRemoveOrAdd = 0;
                 float noseWeight = (float) Integer.parseInt(edtNoseTailWeight.getText().toString());
                 float leftWeight = (float) Integer.parseInt(edtMainsLeftWeight.getText().toString());
@@ -246,20 +319,15 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void LoadDataBegin() {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        editor = sharedPreferences.edit();
-        edtNoseTailWeight.setText(String.valueOf(sharedPreferences.getInt(NoseWeigh, 500)));
-        edtMainsLeftWeight.setText(String.valueOf(sharedPreferences.getInt(LeftWeight, 500)));
-        edtMainsRightWeight.setText(String.valueOf(sharedPreferences.getInt(RightWeight, 500)));
-        edtDistanceZ.setText(String.valueOf(sharedPreferences.getInt(DistanceZ, 500)));
-        edtDistanceX.setText(String.valueOf(sharedPreferences.getInt(DistanceX, 500)));
-        edtDistanceY.setText(String.valueOf(sharedPreferences.getInt(DistanceY, 1000)));
-        txtTotalWeight.setText(String.valueOf((int)(sharedPreferences.getInt(NoseWeigh, 500)
-                +sharedPreferences.getInt(LeftWeight, 500)+sharedPreferences.getInt(RightWeight, 500)))+"g");
-
         listDataSaved = new ArrayList<>();
         dataSavedAdapter adapter = new dataSavedAdapter(this, R.layout.list_view_data_saved, listDataSaved);
         lvDataSaved.setAdapter(adapter);
+
+        //Creating the ArrayAdapter instance having the country list
+        spnAdapter = new ArrayAdapter(this,android.R.layout.simple_spinner_item);
+        spnAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        //Setting the ArrayAdapter data on the Spinner
+        spnShowDataSaved.setAdapter(spnAdapter);
 
         try {
             flagGetCookie = true;
@@ -269,6 +337,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+
     }
 
     private void initLayout() {
@@ -313,6 +383,13 @@ public class MainActivity extends AppCompatActivity {
         rlDataSavedFragment = findViewById(R.id.rlDataSavedFragment);
         imgBackFragmentDataSaved = findViewById(R.id.imgBackFragmentDataSaved);
         prbLoadingUrl = findViewById(R.id.prbLoadingUrl);
+        txtShowNameDataSaved = findViewById(R.id.txtShowNameDataSaved);
+
+        rlSendRequestSaveName = findViewById(R.id.rlSendRequestSaveName);
+        spnShowDataSaved = findViewById(R.id.spnShowDataSaved);
+        edtNewNameSaved = findViewById(R.id.edtNewNameSaved);
+        btnSendSavedNameRequest = findViewById(R.id.btnSendSavedNameRequest);
+        btnCancelSavedNameRequest = findViewById(R.id.btnCancelSavedNameRequest);
     }
 
     public void getUrl(String url) throws IOException, InterruptedException {
@@ -407,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
                                 JSONObject mJsonObjectProperty = arrayRooms.getJSONObject(i);
                                 String data = mJsonObjectProperty.getString("img_path");
                                 JSONObject mJsonData = new JSONObject(data);
-                                Log.i("responseBodyData", data);
+//                                Log.i("responseBodyData", data);
                                 String name = mJsonData.getString("name");
                                 int X = mJsonData.getInt("X");
                                 int Y = mJsonData.getInt("Y");
@@ -421,6 +498,37 @@ public class MainActivity extends AppCompatActivity {
                                     lvDataSaved.refreshDrawableState();
                                 }
                             });
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(flagSetDataSaved){
+                        flagSetDataSaved = false;
+                        JSONObject root = null;
+                        try {
+                            root = new JSONObject(myResponse);
+                            String status = root.getString("status");
+                            if(status.equals("ok")){
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        rlSendRequestSaveName.setVisibility(View.INVISIBLE);
+                                        prbLoadingUrl.setVisibility(View.INVISIBLE);
+                                        txtShowNameDataSaved.setText(edtNewNameSaved.getText().toString());
+                                        Toast.makeText(MainActivity.this, "DONE", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+                            else if(status.equals("error")){
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        rlSendRequestSaveName.setVisibility(View.INVISIBLE);
+                                        prbLoadingUrl.setVisibility(View.INVISIBLE);
+                                        Toast.makeText(MainActivity.this, "DATA NO CHANGE", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
