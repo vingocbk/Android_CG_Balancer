@@ -402,6 +402,7 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             root = new JSONObject(myResponse);
                             JSONArray arrayRooms = root.getJSONArray("rooms");
+                            listDataSaved.clear();
                             for(int i = 0; i < arrayRooms.length(); i++){
                                 JSONObject mJsonObjectProperty = arrayRooms.getJSONObject(i);
                                 String data = mJsonObjectProperty.getString("img_path");
