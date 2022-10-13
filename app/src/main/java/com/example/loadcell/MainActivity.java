@@ -55,6 +55,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -69,8 +70,10 @@ import java.util.concurrent.CountDownLatch;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -133,9 +136,12 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar prbLoadingUrl;
     String loadDataFail = "Can't Load Data";
     String cookie = "";
+    String roomID   = "23";
     String urlLogging = "https://avystore.com/appapi/user/generate_auth_cookie?username=0936156099&password=12345";
-    String urlListDevice = "https://avystore.com/appapi/user/user_list_devices?cookie=" + cookie + "&room_id=23";
     OkHttpClient client = new OkHttpClient();
+    boolean flagGetCookie = false;
+    boolean flagGetDataSaved = false;
+    boolean flagSetDataSaved = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -153,44 +159,23 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 rlDataSavedFragment.setVisibility(View.VISIBLE);
                 prbLoadingUrl.setVisibility(View.VISIBLE);
-                String data = loadDataFail;
-                if(cookie.equals("")){
-                    try {
-                        data = getUrl(urlLogging);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-//                    if(!data.equals(loadDataFail)){
-//                        try {
-//                            JSONObject root = new JSONObject(data);
-//                            cookie = root.getString("cookie");
-//                            Toast.makeText(MainActivity.this, cookie, Toast.LENGTH_SHORT).show();
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }else{
-//                        Toast.makeText(MainActivity.this, data, Toast.LENGTH_SHORT).show();
-//                    }
+                if(!cookie.equals("")){
+                    String urlListDevice = "https://avystore.com/appapi/user/user_list_devices";
+                    flagGetDataSaved = true;
+                    RequestBody requestBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("cookie", cookie)
+                        .addFormDataPart("room_id", roomID)
+                        .addFormDataPart("in", "1")
+                        .addFormDataPart("id", "1")
+                        .build();
+                    postUrl(urlListDevice, requestBody);
                 }
-                prbLoadingUrl.setVisibility(View.INVISIBLE);
+                else{
+                    Toast.makeText(MainActivity.this, "Can't Get Data", Toast.LENGTH_SHORT).show();
+                    prbLoadingUrl.setVisibility(View.INVISIBLE);
+                }
 
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        Request request = new Request.Builder()
-//                                .url(urlLogging)
-//                                .build();
-//                        try{
-//                            Response response = client.newCall(request).execute();
-//                            Toast.makeText(MainActivity.this,response.body().string().toString(), Toast.LENGTH_SHORT).show();
-////                                return;
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                });
             }
         });
 
@@ -259,33 +244,6 @@ public class MainActivity extends AppCompatActivity {
         marginParams.setMargins(0, 0, 340, 0);
     }
 
-    private void bleCheck() {
-        mHandler = new Handler();
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, "BLE Not Supported",
-                    Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) this.getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-        if (ActivityCompat.checkSelfPermission(this, BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
-            // Bluetooth permission has not been granted.
-            ActivityCompat.requestPermissions(this, new String[]{BLUETOOTH}, REQUEST_BLUETOOTH_ID);
-        }
-        if (ActivityCompat.checkSelfPermission(this, BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
-            // Bluetooth admin permission has not been granted.
-            ActivityCompat.requestPermissions(this, new String[]{BLUETOOTH_ADMIN}, REQUEST_BLUETOOTH_ADMIN_ID);
-        }
-    }
-
-    private void locationCheck() {
-        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Location permission has not been granted.
-            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION}, REQUEST_LOCATION_ID);
-        }
-    }
-
 
     public void LoadDataBegin() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -300,9 +258,17 @@ public class MainActivity extends AppCompatActivity {
                 +sharedPreferences.getInt(LeftWeight, 500)+sharedPreferences.getInt(RightWeight, 500)))+"g");
 
         listDataSaved = new ArrayList<>();
-//        listDataSaved.add(new dataSaved(1, "Lập Trình Java", 2, 3, 4));
         dataSavedAdapter adapter = new dataSavedAdapter(this, R.layout.list_view_data_saved, listDataSaved);
         lvDataSaved.setAdapter(adapter);
+
+        try {
+            flagGetCookie = true;
+            getUrl(urlLogging);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void initLayout() {
@@ -349,16 +315,22 @@ public class MainActivity extends AppCompatActivity {
         prbLoadingUrl = findViewById(R.id.prbLoadingUrl);
     }
 
-    public String getUrl(String url) throws IOException, InterruptedException {
+    public void getUrl(String url) throws IOException, InterruptedException {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        final String[] dataReturn = {loadDataFail};
-        Log.i("responseBodyData", dataReturn[0]);
+//        Log.i("responseBodyData", dataReturn[0]);
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Can.t Connect Internet", Toast.LENGTH_SHORT).show();
+                        prbLoadingUrl.setVisibility(View.INVISIBLE);
+                    }
+                });
                 e.printStackTrace();
             }
 
@@ -369,21 +341,96 @@ public class MainActivity extends AppCompatActivity {
                     if (!response.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
                     }
-                    dataReturn[0] = responseBody.string();
-//                    Log.i("responseBodyData", responseBody.string());
-//                    Toast.makeText(MainActivity.this, responseBody.string(), Toast.LENGTH_SHORT).show();
+                    String dataReturn = "";
+//                    assert responseBody != null;
+                    dataReturn = responseBody.string();
+                    Log.i("responseBodyData", dataReturn);
+                    if(flagGetCookie){
+                        flagGetCookie = false;
+                        JSONObject root = new JSONObject(dataReturn);
+                        cookie = root.getString("cookie");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                prbLoadingUrl.setVisibility(View.INVISIBLE);
+                            }
+                        });
+                    }
                 } catch (Exception e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Can.t Connect Internet", Toast.LENGTH_SHORT).show();
+                            prbLoadingUrl.setVisibility(View.INVISIBLE);
+                        }
+                    });
                     e.printStackTrace();
                 }
-                Log.i("responseBodyData", dataReturn[0]);
-//                Toast.makeText(MainActivity.this, dataReturn[0], Toast.LENGTH_SHORT).show();
             }
         });
-//        try (Response response = client.newCall(request).execute()) {
-//            return response.body().string();
-//        }
-        return dataReturn[0];
     }
+
+    public void postUrl(String url, RequestBody requestBody){
+        OkHttpClient client = new OkHttpClient();
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .post(requestBody)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Can.t Connect Internet", Toast.LENGTH_SHORT).show();
+                        prbLoadingUrl.setVisibility(View.INVISIBLE);
+                    }
+                });
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, okhttp3.Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    final String myResponse = response.body().string();
+                    Log.i("responseBodyData", myResponse);
+                    if(flagGetDataSaved){
+                        flagGetDataSaved = false;
+                        prbLoadingUrl.setVisibility(View.INVISIBLE);
+                        JSONObject root = null;
+                        try {
+                            root = new JSONObject(myResponse);
+                            JSONArray arrayRooms = root.getJSONArray("rooms");
+                            for(int i = 0; i < arrayRooms.length(); i++){
+                                JSONObject mJsonObjectProperty = arrayRooms.getJSONObject(i);
+                                String data = mJsonObjectProperty.getString("img_path");
+                                JSONObject mJsonData = new JSONObject(data);
+                                Log.i("responseBodyData", data);
+                                String name = mJsonData.getString("name");
+                                int X = mJsonData.getInt("X");
+                                int Y = mJsonData.getInt("Y");
+                                int Z = mJsonData.getInt("Z");
+                                listDataSaved.add(new dataSaved(i + 1, name, X, Y, Z));
+                            }
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    lvDataSaved.invalidateViews();
+                                    lvDataSaved.refreshDrawableState();
+                                }
+                            });
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+
+
 
 
 
