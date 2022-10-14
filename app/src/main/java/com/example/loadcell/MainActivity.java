@@ -25,7 +25,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -132,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView lvDataSaved;
     Button btnSaveData, btnLoadData;
     RelativeLayout rlDataSavedFragment, rlSendRequestSaveName;
-    ImageView imgBackFragmentDataSaved;
+    ImageView imgBackFragmentDataSaved, imgShowPlane;
     ProgressBar prbLoadingUrl;
     TextView txtShowNameDataSaved;
     Spinner spnShowDataSaved;
@@ -147,6 +153,24 @@ public class MainActivity extends AppCompatActivity {
     boolean flagGetCookie = false;
     boolean flagGetDataSaved = false;
     boolean flagSetDataSaved = false;
+    boolean flagSyncImage = false;
+    int[] positionHeight = new int[6];  //star form 1 -> 5
+    int[] positionWidth = new int[6];
+    //variable for save name motor
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
+    String syncImage = "sync";
+    String positionHeight1 = "Height1";
+    String positionHeight2 = "Height2";
+    String positionHeight3 = "Height3";
+    String positionHeight4 = "Height4";
+    String positionHeight5 = "Height5";
+
+    String positionWidth1 = "Width1";
+    String positionWidth2 = "Width2";
+    String positionWidth3 = "Width3";
+    String positionWidth4 = "Width4";
+    String positionWidth5 = "Width5";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -156,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i(LogFunction, "onCreate");
         initLayout();
         LoadDataBegin();
-
         btnLoadData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -270,6 +293,8 @@ public class MainActivity extends AppCompatActivity {
         btnCalculateCG.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                drawLine(positionWidth[1], positionHeight[1], positionWidth[5], positionHeight[1]);
+                drawCycle(positionWidth[2], positionHeight[2]);
                 if(edtNoseTailWeight.getText().toString().equals("")
                         || edtMainsLeftWeight.getText().toString().equals("")
                         || edtMainsRightWeight.getText().toString().equals("")
@@ -312,11 +337,37 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) llPositionCenter.getLayoutParams();
         marginParams.setMargins(0, 0, 340, 0);
     }
 
+    private void drawLine(float x, float y, float xend, float yend) {
+
+        Bitmap bmp = Bitmap.createBitmap(imgShowPlane.getWidth(), imgShowPlane.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        imgShowPlane.draw(c);
+
+        Paint p = new Paint();
+        p.setColor(Color.RED);
+        p.setStrokeWidth(3f);
+        c.drawLine(x, y, xend, yend, p);
+        imgShowPlane.setImageBitmap(bmp);
+    }
+
+    private void drawCycle(float x, float y) {
+
+        Bitmap bmp = Bitmap.createBitmap(imgShowPlane.getWidth(), imgShowPlane.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        imgShowPlane.draw(c);
+
+        Paint p = new Paint();
+        p.setStyle(Paint.Style.FILL);
+        p.setColor(Color.RED);
+        int radius = 20;
+        p.setStrokeWidth(3f);
+        c.drawCircle(x, y, radius, p);
+        imgShowPlane.setImageBitmap(bmp);
+    }
 
     public void LoadDataBegin() {
         listDataSaved = new ArrayList<>();
@@ -339,6 +390,27 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = sharedPreferences.edit();
+        flagSyncImage = sharedPreferences.getBoolean(syncImage, false);
+        positionHeight[1] = sharedPreferences.getInt(positionHeight1, 0);
+        positionHeight[2] = sharedPreferences.getInt(positionHeight2, 0);
+        positionHeight[3] = sharedPreferences.getInt(positionHeight3, 0);
+        positionHeight[4] = sharedPreferences.getInt(positionHeight4, 0);
+        positionHeight[5] = sharedPreferences.getInt(positionHeight5, 0);
+        positionWidth[1] = sharedPreferences.getInt(positionWidth1, 0);
+        positionWidth[2] = sharedPreferences.getInt(positionWidth2, 0);
+        positionWidth[3] = sharedPreferences.getInt(positionWidth3, 0);
+        positionWidth[4] = sharedPreferences.getInt(positionWidth4, 0);
+        positionWidth[5] = sharedPreferences.getInt(positionWidth5, 0);
+        imgShowPlane.setDrawingCacheEnabled(true);
+        imgShowPlane.buildDrawingCache(true);
+        if(flagSyncImage){
+            imgShowPlane.setBackgroundResource(R.mipmap.plane_3);
+            for(int i = 0; i < 5; i++){
+                Log.i("BitmapDrawable", "position: " + positionHeight[i+1] + " - " + positionWidth[i+1]);
+            }
+        }
     }
 
     private void initLayout() {
@@ -390,7 +462,9 @@ public class MainActivity extends AppCompatActivity {
         edtNewNameSaved = findViewById(R.id.edtNewNameSaved);
         btnSendSavedNameRequest = findViewById(R.id.btnSendSavedNameRequest);
         btnCancelSavedNameRequest = findViewById(R.id.btnCancelSavedNameRequest);
+        imgShowPlane = findViewById(R.id.imgShowPlane);
     }
+
 
     public void getUrl(String url) throws IOException, InterruptedException {
         OkHttpClient client = new OkHttpClient();
@@ -432,6 +506,57 @@ public class MainActivity extends AppCompatActivity {
                                 prbLoadingUrl.setVisibility(View.INVISIBLE);
                             }
                         });
+                    }
+                    if(!flagSyncImage){
+                        Bitmap bitmap = imgShowPlane.getDrawingCache();
+                        Log.i("BitmapDrawable", "Height: " + String.valueOf(bitmap.getHeight()));
+                        Log.i("BitmapDrawable", "Width: " + String.valueOf(bitmap.getWidth()));
+                        int count = 0;
+                        for(int i = 0; i < bitmap.getHeight(); i++){
+                            for(int j = 0; j < bitmap.getWidth(); j++){
+                                int pixel = bitmap.getPixel(j,i);
+                                int redValue = Color.red(pixel);
+                                if(redValue >= 233){
+//                                    Log.i("BitmapDrawable", "position: " + String.valueOf(i) + " - " + String.valueOf(j));
+                                    if(i >= (positionHeight[count] + 20)){
+                                        count++;
+                                        positionHeight[count] = i;
+                                        positionWidth[count] = j;
+                                        Log.i("BitmapDrawable", "position: " + positionHeight[count] + " - " + positionWidth[count]);
+                                    }
+                                }
+                            }
+                        }
+                        if(count >= 5){
+                            flagSyncImage = true;
+                            editor.putBoolean(syncImage, true);
+                            editor.putInt(positionHeight1, positionHeight[1]);
+                            editor.putInt(positionHeight2, positionHeight[2]);
+                            editor.putInt(positionHeight3, positionHeight[3]);
+                            editor.putInt(positionHeight4, positionHeight[4]);
+                            editor.putInt(positionHeight5, positionHeight[5]);
+                            editor.putInt(positionWidth1, positionWidth[1]);
+                            editor.putInt(positionWidth2, positionWidth[2]);
+                            editor.putInt(positionWidth3, positionWidth[3]);
+                            editor.putInt(positionWidth4, positionWidth[4]);
+                            editor.putInt(positionWidth5, positionWidth[5]);
+                            editor.commit();
+                            Log.i("BitmapDrawable", "Load data Image OK");
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imgShowPlane.setBackgroundResource(R.mipmap.plane_3);
+                                }
+                            });
+                        }
+                        else{
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imgShowPlane.setBackgroundResource(R.mipmap.plane_4);
+                                }
+                            });
+                        }
                     }
                 } catch (Exception e) {
                     runOnUiThread(new Runnable() {

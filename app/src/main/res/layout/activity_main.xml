@@ -2,9 +2,9 @@
 <RelativeLayout class="androidx.appcompat.app.AlertController$RecycleListView" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="@mipmap/background_3"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@mipmap/background_3"
     tools:context=".MainActivity">
     <ImageView
         android:id="@+id/imgBleConnect"
@@ -13,6 +13,7 @@
         android:visibility="gone"
         android:layout_centerHorizontal="true"
         android:background="@mipmap/ble_disconnect" />
+
     <LinearLayout
         android:weightSum="3"
         android:orientation="vertical"
@@ -267,12 +268,16 @@
             android:layout_weight="1"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+            <ImageView
+                android:layout_width="10px"
+                android:layout_height="10px"/>
 
             <ImageView
+                android:id="@+id/imgShowPlane"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_centerInParent="true"
-                android:background="@mipmap/plane_2" />
+                android:background="@mipmap/plane_background_1" />
 
             <LinearLayout
                 android:id="@+id/llPositionCenter"
@@ -302,7 +307,7 @@
             </LinearLayout>
             <RelativeLayout
                 android:layout_alignParentBottom="true"
-                android:layout_marginBottom="50dp"
+                android:layout_marginBottom="40dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -540,5 +545,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true" />
+
+<!--    <ImageView-->
+<!--        android:background="@mipmap/center"-->
+<!--        android:layout_marginStart="190dp"-->
+<!--        android:layout_marginTop="390dp"-->
+<!--        android:layout_width="20dp"-->
+<!--        android:layout_height="20dp"/>-->
+<!--    <TextView-->
+<!--        android:text="."-->
+<!--        android:textSize="80sp"-->
+<!--        android:textStyle="bold"-->
+<!--        android:textColor="#5CF3C8"-->
+<!--        android:layout_marginStart="150dp"-->
+<!--        android:layout_marginTop="315dp"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"/>-->
 
 </RelativeLayout>
