@@ -171,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
     String positionWidth3 = "Width3";
     String positionWidth4 = "Width4";
     String positionWidth5 = "Width5";
+    Bitmap bmp = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -184,8 +185,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 rlDataSavedFragment.setVisibility(View.VISIBLE);
+                if(!listDataSaved.isEmpty()){
+                    return;
+                }
                 prbLoadingUrl.setVisibility(View.VISIBLE);
-                if(!cookie.equals("")){
+                if(cookie.equals("")) {
+                    try {
+                        flagGetCookie = true;
+                        getUrl(urlLogging);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else{
                     String urlListDevice = "https://avystore.com/appapi/user/user_list_devices";
                     flagGetDataSaved = true;
                     RequestBody requestBody = new MultipartBody.Builder()
@@ -195,11 +209,10 @@ public class MainActivity extends AppCompatActivity {
                         .build();
                     postUrl(urlListDevice, requestBody);
                 }
-                else{
-                    Toast.makeText(MainActivity.this, "Can't Get Data", Toast.LENGTH_SHORT).show();
-                    prbLoadingUrl.setVisibility(View.INVISIBLE);
-                }
-
+//                else{
+//                    Toast.makeText(MainActivity.this, "Can't Get Data", Toast.LENGTH_SHORT).show();
+//                    prbLoadingUrl.setVisibility(View.INVISIBLE);
+//                }
             }
         });
 
@@ -293,8 +306,6 @@ public class MainActivity extends AppCompatActivity {
         btnCalculateCG.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawLine(positionWidth[1], positionHeight[1], positionWidth[5], positionHeight[1]);
-                drawCycle(positionWidth[2], positionHeight[2]);
                 if(edtNoseTailWeight.getText().toString().equals("")
                         || edtMainsLeftWeight.getText().toString().equals("")
                         || edtMainsRightWeight.getText().toString().equals("")
@@ -304,29 +315,80 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Fill Full the Information!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                float weightRemoveOrAdd = 0;
+                //-------draw image---------
+                if(flagSyncImage){
+                    float y_Z = (float) (Integer.parseInt(edtDistanceY.getText().toString()))/(float) (Integer.parseInt(edtDistanceZ.getText().toString()));
+                    Log.i("BitmapDrawable", String.valueOf(y_Z));
+                    clearBitmap();
+                    drawLine(positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]),
+                            positionHeight[2],
+                            positionWidth[2],
+                            positionHeight[2]);
+                    drawLine(positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]),
+                            positionHeight[2],
+                            positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]),
+                            positionHeight[4]);
+                    float x_Z = (float) (Integer.parseInt(edtDistanceX.getText().toString()))/(float) (Integer.parseInt(edtDistanceZ.getText().toString()));
+                    drawLine(positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]),
+                            positionHeight[3],
+                            positionWidth[3],
+                            positionHeight[3]);
+                    drawLine(positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]),
+                            positionHeight[3],
+                            positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]),
+                            positionHeight[4]);
+                    drawCycle(positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]), positionHeight[4], Color.MAGENTA,
+                            positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]), positionHeight[4], Color.GREEN);
+                }
+
+                //--------------------------
+                float MomentRemoveOrAdd = 0;
                 float noseWeight = (float) Integer.parseInt(edtNoseTailWeight.getText().toString());
                 float leftWeight = (float) Integer.parseInt(edtMainsLeftWeight.getText().toString());
                 float rightWeight = (float) Integer.parseInt(edtMainsRightWeight.getText().toString());
                 float distanceZ = (float) Integer.parseInt(edtDistanceZ.getText().toString());
                 float distanceX = (float) Integer.parseInt(edtDistanceX.getText().toString());
                 float distanceY = (float) Integer.parseInt(edtDistanceY.getText().toString());
-                weightRemoveOrAdd = ((noseWeight*(distanceZ-distanceX) - (leftWeight+rightWeight)*distanceX))/(distanceY-distanceX);
-
+                MomentRemoveOrAdd = ((noseWeight*(distanceZ-distanceX) - (leftWeight+rightWeight)*distanceX));
                 txtTotalWeight.setText(String.valueOf((int)(noseWeight+leftWeight+rightWeight))+"g");
-                if(weightRemoveOrAdd > 0){
+                float weightRemoveOrAdd = 0;
+                if(MomentRemoveOrAdd > 0){
+                    txtNotificationNoseTailHeavy.setText("NOSE HEAVY");
                     imgArrayShowNoseHeave.setVisibility(View.VISIBLE);
                     imgArrayShowTailHeave.setVisibility(View.INVISIBLE);
-                    txtNotificationNoseTailHeavy.setText("NOSE HEAVY");
-                    txtNoticeAddOrRemove.setText("Remove");
+                    if(distanceY > distanceX){
+                        weightRemoveOrAdd = MomentRemoveOrAdd/(distanceY-distanceX);
+                        txtNoticeAddOrRemove.setText("Remove");
+                    }
+                    else if(distanceY < distanceX){
+                        weightRemoveOrAdd = MomentRemoveOrAdd/(distanceX-distanceY);
+                        txtNoticeAddOrRemove.setText("Add");
+                    }
+                    else{
+                        txtNotificationWeightRemove.setText(String.valueOf((int)0));
+                        Toast.makeText(MainActivity.this, "X must != Y", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     txtNotificationWeightRemove.setText(String.valueOf((int)weightRemoveOrAdd));
 
-                }else if(weightRemoveOrAdd < 0){
+                }else if(MomentRemoveOrAdd < 0){
                     imgArrayShowNoseHeave.setVisibility(View.INVISIBLE);
                     imgArrayShowTailHeave.setVisibility(View.VISIBLE);
                     txtNotificationNoseTailHeavy.setText("TAIL HEAVY");
-                    txtNoticeAddOrRemove.setText("Add");
-                    txtNotificationWeightRemove.setText(String.valueOf(-(int)weightRemoveOrAdd));
+                    if(distanceY > distanceX){
+                        weightRemoveOrAdd = -MomentRemoveOrAdd/(distanceY-distanceX);
+                        txtNoticeAddOrRemove.setText("Add");
+                    }
+                    else if(distanceY < distanceX){
+                        weightRemoveOrAdd = -MomentRemoveOrAdd/(distanceX-distanceY);
+                        txtNoticeAddOrRemove.setText("Remove");
+                    }
+                    else{
+                        txtNotificationWeightRemove.setText(String.valueOf((int)0));
+                        Toast.makeText(MainActivity.this, "X must != Y", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    txtNotificationWeightRemove.setText(String.valueOf((int)weightRemoveOrAdd));
                 }
                 else {
                     imgArrayShowNoseHeave.setVisibility(View.INVISIBLE);
@@ -337,35 +399,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) llPositionCenter.getLayoutParams();
-        marginParams.setMargins(0, 0, 340, 0);
     }
 
-    private void drawLine(float x, float y, float xend, float yend) {
-
-        Bitmap bmp = Bitmap.createBitmap(imgShowPlane.getWidth(), imgShowPlane.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmp);
-        imgShowPlane.draw(c);
-
+    private void drawLine(float x, float y, float xEnd, float yEnd) {
+        Canvas canvas = new Canvas(bmp);
+        imgShowPlane.draw(canvas);
         Paint p = new Paint();
         p.setColor(Color.RED);
         p.setStrokeWidth(3f);
-        c.drawLine(x, y, xend, yend, p);
+        canvas.drawLine(x, y, xEnd, yEnd, p);
         imgShowPlane.setImageBitmap(bmp);
     }
 
-    private void drawCycle(float x, float y) {
-
-        Bitmap bmp = Bitmap.createBitmap(imgShowPlane.getWidth(), imgShowPlane.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmp);
-        imgShowPlane.draw(c);
+    private void drawCycle(float x1, float y1, int color1, float x2, float y2, int color2) {
+        Canvas canvas = new Canvas(bmp);
+        imgShowPlane.draw(canvas);
 
         Paint p = new Paint();
         p.setStyle(Paint.Style.FILL);
-        p.setColor(Color.RED);
+        p.setColor(color1);
         int radius = 20;
         p.setStrokeWidth(3f);
-        c.drawCircle(x, y, radius, p);
+        canvas.drawCircle(x1, y1, radius, p);
+        p.setColor(color2);
+        canvas.drawCircle(x2, y2, radius, p);
+        imgShowPlane.setImageBitmap(bmp);
+    }
+    private void clearBitmap() {
+        bmp.eraseColor(Color.TRANSPARENT);
         imgShowPlane.setImageBitmap(bmp);
     }
 
@@ -379,15 +440,6 @@ public class MainActivity extends AppCompatActivity {
         spnAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         //Setting the ArrayAdapter data on the Spinner
         spnShowDataSaved.setAdapter(spnAdapter);
-
-        try {
-            flagGetCookie = true;
-            getUrl(urlLogging);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -403,14 +455,9 @@ public class MainActivity extends AppCompatActivity {
         positionWidth[3] = sharedPreferences.getInt(positionWidth3, 0);
         positionWidth[4] = sharedPreferences.getInt(positionWidth4, 0);
         positionWidth[5] = sharedPreferences.getInt(positionWidth5, 0);
+
         imgShowPlane.setDrawingCacheEnabled(true);
         imgShowPlane.buildDrawingCache(true);
-        if(flagSyncImage){
-            imgShowPlane.setBackgroundResource(R.mipmap.plane_3);
-            for(int i = 0; i < 5; i++){
-                Log.i("BitmapDrawable", "position: " + positionHeight[i+1] + " - " + positionWidth[i+1]);
-            }
-        }
     }
 
     private void initLayout() {
@@ -465,6 +512,80 @@ public class MainActivity extends AppCompatActivity {
         imgShowPlane = findViewById(R.id.imgShowPlane);
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(bmp == null && imgShowPlane.getWidth() > 0 && imgShowPlane.getHeight() > 0){
+            bmp = Bitmap.createBitmap(imgShowPlane.getWidth(), imgShowPlane.getHeight(), Bitmap.Config.ARGB_8888);
+            if(!flagSyncImage){
+                Bitmap bitmap = imgShowPlane.getDrawingCache();
+                Log.i("BitmapDrawable", "Height: " + String.valueOf(bitmap.getHeight()));
+                Log.i("BitmapDrawable", "Width: " + String.valueOf(bitmap.getWidth()));
+                int count = 0;
+                for(int i = 0; i < bitmap.getHeight(); i++){
+                    for(int j = 0; j < bitmap.getWidth(); j++){
+                        int pixel = bitmap.getPixel(j,i);
+                        int redValue = Color.red(pixel);
+                        if(redValue >= 233){
+//                                    Log.i("BitmapDrawable", "position: " + String.valueOf(i) + " - " + String.valueOf(j));
+                            if(i >= (positionHeight[count] + 20)){
+                                count++;
+                                positionHeight[count] = i;
+                                positionWidth[count] = j;
+                                Log.i("BitmapDrawable", "position: " + positionHeight[count] + " - " + positionWidth[count]);
+                            }
+                        }
+                    }
+                }
+                if(count >= 5){
+                    flagSyncImage = true;
+                    editor.putBoolean(syncImage, true);
+                    editor.putInt(positionHeight1, positionHeight[1]);
+                    editor.putInt(positionHeight2, positionHeight[2]);
+                    editor.putInt(positionHeight3, positionHeight[3]);
+                    editor.putInt(positionHeight4, positionHeight[4]);
+                    editor.putInt(positionHeight5, positionHeight[5]);
+                    editor.putInt(positionWidth1, positionWidth[1]);
+                    editor.putInt(positionWidth2, positionWidth[2]);
+                    editor.putInt(positionWidth3, positionWidth[3]);
+                    editor.putInt(positionWidth4, positionWidth[4]);
+                    editor.putInt(positionWidth5, positionWidth[5]);
+                    editor.commit();
+                    Log.i("BitmapDrawable", "Load data Image OK");
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "Can't load data Image", Toast.LENGTH_SHORT).show();
+                    imgShowPlane.setBackgroundResource(R.mipmap.plane_4);
+                    return;
+                }
+            }
+            for(int i = 0; i < 5; i++){
+                Log.i("BitmapDrawable", "position: " + positionHeight[i+1] + " - " + positionWidth[i+1]);
+            }
+            imgShowPlane.setBackgroundResource(R.mipmap.plane_3);
+            drawLine(positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3,
+                    positionHeight[2],
+                    positionWidth[2],
+                    positionHeight[2]);
+            drawLine(positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3,
+                    positionHeight[2],
+                    positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3,
+                    positionHeight[4]);
+
+            drawLine(positionWidth[5]+(float)2*(positionWidth[2]-positionWidth[5])/3,
+                    positionHeight[3],
+                    positionWidth[3],
+                    positionHeight[3]);
+            drawLine(positionWidth[5]+(float)2*(positionWidth[2]-positionWidth[5])/3,
+                    positionHeight[3],
+                    positionWidth[5]+(float)2*(positionWidth[2]-positionWidth[5])/3,
+                    positionHeight[4]);
+            drawCycle(positionWidth[5]+(float)(2*(positionWidth[2]-positionWidth[5])/3), positionHeight[4], Color.MAGENTA,
+                    positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3, positionHeight[4], Color.GREEN);
+        }
+
+    }
+
 
     public void getUrl(String url) throws IOException, InterruptedException {
         OkHttpClient client = new OkHttpClient();
@@ -500,64 +621,16 @@ public class MainActivity extends AppCompatActivity {
                         flagGetCookie = false;
                         JSONObject root = new JSONObject(dataReturn);
                         cookie = root.getString("cookie");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                prbLoadingUrl.setVisibility(View.INVISIBLE);
-                            }
-                        });
+                        String urlListDevice = "https://avystore.com/appapi/user/user_list_devices";
+                        flagGetDataSaved = true;
+                        RequestBody requestBody = new MultipartBody.Builder()
+                                .setType(MultipartBody.FORM)
+                                .addFormDataPart("cookie", cookie)
+                                .addFormDataPart("room_id", roomID)
+                                .build();
+                        postUrl(urlListDevice, requestBody);
                     }
-                    if(!flagSyncImage){
-                        Bitmap bitmap = imgShowPlane.getDrawingCache();
-                        Log.i("BitmapDrawable", "Height: " + String.valueOf(bitmap.getHeight()));
-                        Log.i("BitmapDrawable", "Width: " + String.valueOf(bitmap.getWidth()));
-                        int count = 0;
-                        for(int i = 0; i < bitmap.getHeight(); i++){
-                            for(int j = 0; j < bitmap.getWidth(); j++){
-                                int pixel = bitmap.getPixel(j,i);
-                                int redValue = Color.red(pixel);
-                                if(redValue >= 233){
-//                                    Log.i("BitmapDrawable", "position: " + String.valueOf(i) + " - " + String.valueOf(j));
-                                    if(i >= (positionHeight[count] + 20)){
-                                        count++;
-                                        positionHeight[count] = i;
-                                        positionWidth[count] = j;
-                                        Log.i("BitmapDrawable", "position: " + positionHeight[count] + " - " + positionWidth[count]);
-                                    }
-                                }
-                            }
-                        }
-                        if(count >= 5){
-                            flagSyncImage = true;
-                            editor.putBoolean(syncImage, true);
-                            editor.putInt(positionHeight1, positionHeight[1]);
-                            editor.putInt(positionHeight2, positionHeight[2]);
-                            editor.putInt(positionHeight3, positionHeight[3]);
-                            editor.putInt(positionHeight4, positionHeight[4]);
-                            editor.putInt(positionHeight5, positionHeight[5]);
-                            editor.putInt(positionWidth1, positionWidth[1]);
-                            editor.putInt(positionWidth2, positionWidth[2]);
-                            editor.putInt(positionWidth3, positionWidth[3]);
-                            editor.putInt(positionWidth4, positionWidth[4]);
-                            editor.putInt(positionWidth5, positionWidth[5]);
-                            editor.commit();
-                            Log.i("BitmapDrawable", "Load data Image OK");
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imgShowPlane.setBackgroundResource(R.mipmap.plane_3);
-                                }
-                            });
-                        }
-                        else{
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imgShowPlane.setBackgroundResource(R.mipmap.plane_4);
-                                }
-                            });
-                        }
-                    }
+
                 } catch (Exception e) {
                     runOnUiThread(new Runnable() {
                         @Override
@@ -643,6 +716,14 @@ public class MainActivity extends AppCompatActivity {
                                         Toast.makeText(MainActivity.this, "DONE", Toast.LENGTH_SHORT).show();
                                     }
                                 });
+                                String urlListDevice = "https://avystore.com/appapi/user/user_list_devices";
+                                flagGetDataSaved = true;
+                                RequestBody requestBody = new MultipartBody.Builder()
+                                        .setType(MultipartBody.FORM)
+                                        .addFormDataPart("cookie", cookie)
+                                        .addFormDataPart("room_id", roomID)
+                                        .build();
+                                postUrl(urlListDevice, requestBody);
                             }
                             else if(status.equals("error")){
                                 runOnUiThread(new Runnable() {
