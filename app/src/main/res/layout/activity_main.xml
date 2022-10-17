@@ -2,10 +2,17 @@
 <RelativeLayout class="androidx.appcompat.app.AlertController$RecycleListView" xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@mipmap/background_3"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+    <ImageView
+        android:id="@+id/imgBackground"
+        android:largeHeap="true"
+        android:hardwareAccelerated="false"
+        android:background="@mipmap/background_3"
+        android:scaleType="fitXY"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
     <ImageView
         android:id="@+id/imgBleConnect"
         android:layout_width="50dp"
@@ -13,6 +20,25 @@
         android:visibility="gone"
         android:layout_centerHorizontal="true"
         android:background="@mipmap/ble_disconnect" />
+    <LinearLayout
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/imgSelectBackground"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerHorizontal="true"
+            android:background="@mipmap/ic_gallery"
+            android:visibility="visible" />
+        <ImageView
+            android:id="@+id/imgRefreshBackground"
+            android:background="@mipmap/icon_reset"
+            android:layout_width="40dp"
+            android:layout_height="40dp"/>
+    </LinearLayout>
+
 
     <LinearLayout
         android:weightSum="3"
@@ -278,7 +304,7 @@
                 android:layout_height="match_parent"
                 android:layout_centerInParent="true"
                 android:adjustViewBounds="true"
-                android:background="@mipmap/plane_background_1" />
+                android:background="@mipmap/plane_background" />
 
             <LinearLayout
                 android:id="@+id/llPositionCenter"

@@ -26,16 +26,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -58,10 +61,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 
 import org.json.JSONArray;
@@ -69,6 +74,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -124,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnCalculateCG;
     TextView txtNoticeAddOrRemove, txtNotificationWeightRemove;
 
-    ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave;
+    ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave, imgBackground;
     TextView txtNotificationNoseTailHeavy;
 
     String NoseWeigh = "NoseWeigh";
@@ -138,13 +144,18 @@ public class MainActivity extends AppCompatActivity {
     private ListView lvDataSaved;
     Button btnSaveData, btnLoadData;
     RelativeLayout rlDataSavedFragment, rlSendRequestSaveName;
-    ImageView imgBackFragmentDataSaved, imgShowPlane;
+    ImageView imgBackFragmentDataSaved, imgShowPlane, imgSelectBackground, imgRefreshBackground;
     ProgressBar prbLoadingUrl;
     TextView txtShowNameDataSaved;
     Spinner spnShowDataSaved;
     EditText edtNewNameSaved;
     Button btnSendSavedNameRequest, btnCancelSavedNameRequest;
     String loadDataFail = "Can't Load Data";
+    public static int REQUEST_CODE_STORAGE_PERMISSION = 1;
+    public static int REQUEST_CODE_SELECT_IMAGE = 2;
+    String nameUriBackground = "Uri";
+    String IMAGES_FOLDER_NAME = "Landing";
+    String strIndexName = "index";
     String cookie = "";
     String roomID   = "23";
     String urlLogging = "https://avystore.com/appapi/user/generate_auth_cookie?username=0936156099&password=12345";
@@ -154,8 +165,8 @@ public class MainActivity extends AppCompatActivity {
     boolean flagGetDataSaved = false;
     boolean flagSetDataSaved = false;
     boolean flagSyncImage = false;
-    int[] positionHeight = new int[6];  //star form 1 -> 5
-    int[] positionWidth = new int[6];
+    int[] positionHeight = new int[10];  //star form 1 -> 6
+    int[] positionWidth = new int[10];
     //variable for save name motor
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
@@ -165,12 +176,14 @@ public class MainActivity extends AppCompatActivity {
     String positionHeight3 = "Height3";
     String positionHeight4 = "Height4";
     String positionHeight5 = "Height5";
+    String positionHeight6 = "Height6";
 
     String positionWidth1 = "Width1";
     String positionWidth2 = "Width2";
     String positionWidth3 = "Width3";
     String positionWidth4 = "Width4";
     String positionWidth5 = "Width5";
+    String positionWidth6 = "Width6";
     Bitmap bmp = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -235,6 +248,33 @@ public class MainActivity extends AppCompatActivity {
                 edtDistanceZ.setText(String.valueOf(data.getZ()));
             }
         });
+
+        //--------------------------------------change background--------------------------------------------------------
+        imgSelectBackground.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ContextCompat.checkSelfPermission(
+                        getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                            REQUEST_CODE_STORAGE_PERMISSION);
+                } else {
+                    selectImage();
+                }
+            }
+        });
+        imgRefreshBackground.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Bitmap bmpBackground = Bitmap.createBitmap(imgBackground.getWidth(), imgBackground.getHeight(), Bitmap.Config.ARGB_8888);;
+                bmpBackground.eraseColor(Color.TRANSPARENT);
+                imgBackground.setImageBitmap(bmpBackground);
+                editor.putString(nameUriBackground, nameUriBackground);
+                editor.commit();
+            }
+        });
+        //--------------------------------------change background--------------------------------------------------------
 
         btnSaveData.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -320,25 +360,29 @@ public class MainActivity extends AppCompatActivity {
                     float y_Z = (float) (Integer.parseInt(edtDistanceY.getText().toString()))/(float) (Integer.parseInt(edtDistanceZ.getText().toString()));
                     Log.i("BitmapDrawable", String.valueOf(y_Z));
                     clearBitmap();
-                    drawLine(positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]),
+                    drawLine(positionWidth[1],positionHeight[1],positionWidth[4],positionHeight[4], Color.RED);
+                    drawLine(positionWidth[1],positionHeight[1],positionWidth[6],positionHeight[1], Color.RED);
+                    drawLine(positionWidth[6],positionHeight[1],positionWidth[6],positionHeight[4], Color.RED);
+                    drawLine(positionWidth[6]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[6]),
                             positionHeight[2],
                             positionWidth[2],
-                            positionHeight[2]);
-                    drawLine(positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]),
+                            positionHeight[2], Color.MAGENTA);
+                    drawLine(positionWidth[6]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[6]),
                             positionHeight[2],
-                            positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]),
-                            positionHeight[4]);
+                            positionWidth[6]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[6]),
+                            positionHeight[4], Color.MAGENTA);
                     float x_Z = (float) (Integer.parseInt(edtDistanceX.getText().toString()))/(float) (Integer.parseInt(edtDistanceZ.getText().toString()));
-                    drawLine(positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]),
+                    drawLine(positionWidth[6]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[6]),
                             positionHeight[3],
                             positionWidth[3],
-                            positionHeight[3]);
-                    drawLine(positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]),
+                            positionHeight[3], Color.GREEN);
+                    drawLine(positionWidth[6]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[6]),
                             positionHeight[3],
-                            positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]),
-                            positionHeight[4]);
-                    drawCycle(positionWidth[5]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[5]), positionHeight[4], Color.MAGENTA,
-                            positionWidth[5]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[5]), positionHeight[4], Color.GREEN);
+                            positionWidth[6]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[6]),
+                            positionHeight[4], Color.GREEN);
+                    drawCycle(positionWidth[6]+(float)(1 - y_Z)*(positionWidth[2]-positionWidth[6]), positionHeight[5], Color.MAGENTA,
+                            positionWidth[6]+(float)(1 - x_Z)*(positionWidth[3]-positionWidth[6]), positionHeight[5], Color.GREEN);
+
                 }
 
                 //--------------------------
@@ -401,11 +445,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void drawLine(float x, float y, float xEnd, float yEnd) {
+    private void drawLine(float x, float y, float xEnd, float yEnd, int color) {
         Canvas canvas = new Canvas(bmp);
         imgShowPlane.draw(canvas);
         Paint p = new Paint();
-        p.setColor(Color.RED);
+        p.setColor(color);
         p.setStrokeWidth(3f);
         canvas.drawLine(x, y, xEnd, yEnd, p);
         imgShowPlane.setImageBitmap(bmp);
@@ -450,14 +494,33 @@ public class MainActivity extends AppCompatActivity {
         positionHeight[3] = sharedPreferences.getInt(positionHeight3, 0);
         positionHeight[4] = sharedPreferences.getInt(positionHeight4, 0);
         positionHeight[5] = sharedPreferences.getInt(positionHeight5, 0);
+        positionHeight[6] = sharedPreferences.getInt(positionHeight6, 0);
         positionWidth[1] = sharedPreferences.getInt(positionWidth1, 0);
         positionWidth[2] = sharedPreferences.getInt(positionWidth2, 0);
         positionWidth[3] = sharedPreferences.getInt(positionWidth3, 0);
         positionWidth[4] = sharedPreferences.getInt(positionWidth4, 0);
         positionWidth[5] = sharedPreferences.getInt(positionWidth5, 0);
+        positionWidth[6] = sharedPreferences.getInt(positionWidth6, 0);
 
         imgShowPlane.setDrawingCacheEnabled(true);
         imgShowPlane.buildDrawingCache(true);
+
+        //------get background---------
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if(!sharedPreferences.getString(nameUriBackground, nameUriBackground).equals(nameUriBackground)){
+                try {
+//                Toast.makeText(MainActivity.this, sharedPreferences.getString(nameUriBackground, nameUriBackground), Toast.LENGTH_SHORT).show();
+                    String path = sharedPreferences.getString(nameUriBackground, nameUriBackground);
+                    Log.d("filename_path", path);
+                    InputStream inputStream = getContentResolver().openInputStream(Uri.parse(path));
+//                    Log.d("filename_path", path);
+                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                    imgBackground.setImageBitmap(bitmap);
+                } catch (Exception exception){
+                    Log.d("filename_path", "cant convert");
+                }
+            }
+        }
     }
 
     private void initLayout() {
@@ -510,6 +573,10 @@ public class MainActivity extends AppCompatActivity {
         btnSendSavedNameRequest = findViewById(R.id.btnSendSavedNameRequest);
         btnCancelSavedNameRequest = findViewById(R.id.btnCancelSavedNameRequest);
         imgShowPlane = findViewById(R.id.imgShowPlane);
+
+        imgSelectBackground = findViewById(R.id.imgSelectBackground);
+        imgBackground = findViewById(R.id.imgBackground);
+        imgRefreshBackground = findViewById(R.id.imgRefreshBackground);
     }
 
     @Override
@@ -526,9 +593,12 @@ public class MainActivity extends AppCompatActivity {
                     for(int j = 0; j < bitmap.getWidth(); j++){
                         int pixel = bitmap.getPixel(j,i);
                         int redValue = Color.red(pixel);
+//                        Log.i("BitmapDrawable", "position: " + positionHeight[count] + " - " + positionWidth[count]);
+//                        Log.i("BitmapDrawable", "position: " + redValue);
                         if(redValue >= 233){
-//                                    Log.i("BitmapDrawable", "position: " + String.valueOf(i) + " - " + String.valueOf(j));
-                            if(i >= (positionHeight[count] + 20)){
+//                            Log.i("BitmapDrawable", "position: " + i + " - " + j);
+//                            Log.i("BitmapDrawable", "position: " + redValue);
+                            if(i >= (positionHeight[count] + 10)){
                                 count++;
                                 positionHeight[count] = i;
                                 positionWidth[count] = j;
@@ -537,7 +607,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
-                if(count >= 5){
+                if(count >= 6){
                     flagSyncImage = true;
                     editor.putBoolean(syncImage, true);
                     editor.putInt(positionHeight1, positionHeight[1]);
@@ -545,11 +615,13 @@ public class MainActivity extends AppCompatActivity {
                     editor.putInt(positionHeight3, positionHeight[3]);
                     editor.putInt(positionHeight4, positionHeight[4]);
                     editor.putInt(positionHeight5, positionHeight[5]);
+                    editor.putInt(positionHeight6, positionHeight[6]);
                     editor.putInt(positionWidth1, positionWidth[1]);
                     editor.putInt(positionWidth2, positionWidth[2]);
                     editor.putInt(positionWidth3, positionWidth[3]);
                     editor.putInt(positionWidth4, positionWidth[4]);
                     editor.putInt(positionWidth5, positionWidth[5]);
+                    editor.putInt(positionWidth6, positionWidth[6]);
                     editor.commit();
                     Log.i("BitmapDrawable", "Load data Image OK");
                 }
@@ -559,29 +631,24 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
             }
-            for(int i = 0; i < 5; i++){
+            for(int i = 0; i < 6; i++){
                 Log.i("BitmapDrawable", "position: " + positionHeight[i+1] + " - " + positionWidth[i+1]);
             }
             imgShowPlane.setBackgroundResource(R.mipmap.plane_3);
-            drawLine(positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3,
-                    positionHeight[2],
-                    positionWidth[2],
-                    positionHeight[2]);
-            drawLine(positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3,
-                    positionHeight[2],
-                    positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3,
-                    positionHeight[4]);
+            drawLine(positionWidth[1],positionHeight[1],positionWidth[4],positionHeight[4], Color.RED);
+            drawLine(positionWidth[1],positionHeight[1],positionWidth[6],positionHeight[1], Color.RED);
+            drawLine(positionWidth[6],positionHeight[1],positionWidth[6],positionHeight[4], Color.RED);
 
-            drawLine(positionWidth[5]+(float)2*(positionWidth[2]-positionWidth[5])/3,
-                    positionHeight[3],
-                    positionWidth[3],
-                    positionHeight[3]);
-            drawLine(positionWidth[5]+(float)2*(positionWidth[2]-positionWidth[5])/3,
-                    positionHeight[3],
-                    positionWidth[5]+(float)2*(positionWidth[2]-positionWidth[5])/3,
-                    positionHeight[4]);
-            drawCycle(positionWidth[5]+(float)(2*(positionWidth[2]-positionWidth[5])/3), positionHeight[4], Color.MAGENTA,
-                    positionWidth[5]+(float)(positionWidth[2]-positionWidth[5])/3, positionHeight[4], Color.GREEN);
+            drawLine(positionWidth[6]+(float)(positionWidth[2]-positionWidth[6])/3, positionHeight[2], positionWidth[2], positionHeight[2], Color.MAGENTA);
+            drawLine(positionWidth[6]+(float)(positionWidth[2]-positionWidth[6])/3, positionHeight[2],
+                    positionWidth[6]+(float)(positionWidth[2]-positionWidth[6])/3, positionHeight[4], Color.MAGENTA);
+
+            drawLine(positionWidth[6]+(float)2*(positionWidth[3]-positionWidth[6])/3, positionHeight[3], positionWidth[3], positionHeight[3], Color.GREEN);
+            drawLine(positionWidth[6]+(float)2*(positionWidth[3]-positionWidth[6])/3, positionHeight[3],
+                    positionWidth[6]+(float)2*(positionWidth[3]-positionWidth[6])/3, positionHeight[4], Color.GREEN);
+
+            drawCycle(positionWidth[6]+(float)((positionWidth[1]-positionWidth[6])/3), positionHeight[5], Color.MAGENTA,
+                    positionWidth[6]+(float)2*(positionWidth[1]-positionWidth[6])/3, positionHeight[5], Color.GREEN);
         }
 
     }
@@ -745,7 +812,73 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void selectImage() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.putExtra("crop", "true");
+        intent.putExtra("scale", true);
+        intent.putExtra("aspectX", 21);
+        intent.putExtra("aspectY", 9);
+        if(intent.resolveActivity(getPackageManager()) != null){
+            startActivityForResult(intent, REQUEST_CODE_SELECT_IMAGE);
+        }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == REQUEST_CODE_STORAGE_PERMISSION && grantResults.length >0){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                selectImage();
+            }
+            else{
+                Toast.makeText(MainActivity.this, "Permission denied!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == RESULT_OK){
+            if(data != null){
+                Uri selectImageUri = data.getData();
+//                Toast.makeText(MainActivity.this, selectImageUri.toString(), Toast.LENGTH_SHORT).show();
+                if(selectImageUri != null){
+                    try {
+                        //content://com.google.android.apps.photos.contentprovider/-1/1/content%3A%2F%2Fmedia%2Fexternal%2Fimages%2Fmedia%2F5286/ORIGINAL/NONE/image%2Fjpeg/600183246
+                        editor.putString(nameUriBackground, selectImageUri.toString());
+                        editor.commit();
+                        InputStream inputStream = getContentResolver().openInputStream(selectImageUri);
+                        Log.i("filename_path", selectImageUri.toString());
+
+                        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                        imgBackground.setImageBitmap(bitmap);
+//                        saveBitmap(bitmap);
+//                        saveImage(bitmap, nameImageBackGround );
+//                        String fileName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/background.png";
+//                        Log.d("filename_path", fileName);
+//                        File sd = Environment.getExternalStorageDirectory();
+//                        File dest = new File(sd, fileName);
+//
+////                        bitmap = (Bitmap)data.getExtras().get("data");
+//                        try {
+//                            FileOutputStream out = new FileOutputStream(dest);
+//                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+//                            out.flush();
+//                            out.close();
+//                        } catch (Exception e) {
+//                            Log.d("filename_path", "Exception Write");
+//                            e.printStackTrace();
+//                        }
+
+                    } catch (Exception exception){
+
+                    }
+                }
+            }
+        }
+    }
+    //--------------------------------------------------
 
 
 
@@ -828,18 +961,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.i(LogFunction, "onActivityResult");
-        if (requestCode == REQUEST_ENABLE_BT) {
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Bluetooth not enabled.
-                finish();
-                return;
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
 
     private void scanLeDevice(final boolean enable) {
         Log.i(LogFunction, "scanLeDevice " + enable);
