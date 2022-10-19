@@ -45,6 +45,8 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -132,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave, imgBackground;
     TextView txtNotificationNoseTailHeavy;
+
+    Animation blinkTextview;
 
     String NoseWeigh = "NoseWeigh";
     String LeftWeight = "LeftWeight";
@@ -441,6 +445,7 @@ public class MainActivity extends AppCompatActivity {
                     txtNoticeAddOrRemove.setText("Remove");
                     txtNotificationWeightRemove.setText(String.valueOf((int)weightRemoveOrAdd));
                 }
+                txtNotificationNoseTailHeavy.startAnimation(blinkTextview);
             }
         });
     }
@@ -577,6 +582,8 @@ public class MainActivity extends AppCompatActivity {
         imgSelectBackground = findViewById(R.id.imgSelectBackground);
         imgBackground = findViewById(R.id.imgBackground);
         imgRefreshBackground = findViewById(R.id.imgRefreshBackground);
+
+        blinkTextview = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
     }
 
     @Override

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:gravity="center"
-    android:background="@mipmap/background"
+    android:background="@mipmap/background_3"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -17,6 +17,7 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="Save To"
+                android:textColor="@color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -27,6 +28,7 @@
             android:layout_height="wrap_content">
             <Spinner
                 android:id="@+id/spnShowDataSaved"
+                android:textColor="@color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -45,6 +47,7 @@
             android:layout_height="wrap_content">
             <TextView
                 android:text="New Name"
+                android:textColor="@color/black"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -55,6 +58,7 @@
             android:layout_height="wrap_content">
             <EditText
                 android:id="@+id/edtNewNameSaved"
+                android:textColor="@color/black"
                 android:hint="New Name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
