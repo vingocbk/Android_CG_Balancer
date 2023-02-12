@@ -5,6 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <ImageView
+        android:id="@+id/imgDataSavedFragmentBackground"
+        android:largeHeap="true"
+        android:hardwareAccelerated="false"
+        android:background="@mipmap/background_3"
+        android:scaleType="fitXY"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+    <ImageView
         android:id="@+id/imgBackFragmentDataSaved"
         android:background="@mipmap/icon_back"
         android:layout_width="50dp"

@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnCalculateCG;
     TextView txtNoticeAddOrRemove, txtNotificationWeightRemove;
 
-    ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave, imgBackground;
+    ImageView imgArrayShowNoseHeave, imgArrayShowTailHeave, imgBackground, imgSetSavedFragmentBackground, imgDataSavedFragmentBackground;
     TextView txtNotificationNoseTailHeavy;
 
     Animation blinkTextview;
@@ -274,6 +274,8 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bmpBackground = Bitmap.createBitmap(imgBackground.getWidth(), imgBackground.getHeight(), Bitmap.Config.ARGB_8888);;
                 bmpBackground.eraseColor(Color.TRANSPARENT);
                 imgBackground.setImageBitmap(bmpBackground);
+                imgSetSavedFragmentBackground.setImageBitmap(bmpBackground);
+                imgDataSavedFragmentBackground.setImageBitmap(bmpBackground);
                 editor.putString(nameUriBackground, nameUriBackground);
                 editor.commit();
             }
@@ -521,6 +523,8 @@ public class MainActivity extends AppCompatActivity {
 //                    Log.d("filename_path", path);
                     Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                     imgBackground.setImageBitmap(bitmap);
+                    imgSetSavedFragmentBackground.setImageBitmap(bitmap);
+                    imgDataSavedFragmentBackground.setImageBitmap(bitmap);
                 } catch (Exception exception){
                     Log.d("filename_path", "cant convert");
                 }
@@ -583,6 +587,8 @@ public class MainActivity extends AppCompatActivity {
         imgBackground = findViewById(R.id.imgBackground);
         imgRefreshBackground = findViewById(R.id.imgRefreshBackground);
 
+        imgSetSavedFragmentBackground = findViewById(R.id.imgSetSavedFragmentBackground);
+        imgDataSavedFragmentBackground = findViewById(R.id.imgDataSavedFragmentBackground);
         blinkTextview = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.blink);
     }
 
@@ -860,6 +866,9 @@ public class MainActivity extends AppCompatActivity {
 
                         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                         imgBackground.setImageBitmap(bitmap);
+                        imgSetSavedFragmentBackground.setImageBitmap(bitmap);
+                        imgDataSavedFragmentBackground.setImageBitmap(bitmap);
+
 //                        saveBitmap(bitmap);
 //                        saveImage(bitmap, nameImageBackGround );
 //                        String fileName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/background.png";
