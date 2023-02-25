@@ -157,6 +157,8 @@ public class MainActivity extends AppCompatActivity {
     String loadDataFail = "Can't Load Data";
     public static int REQUEST_CODE_STORAGE_PERMISSION = 1;
     public static int REQUEST_CODE_SELECT_IMAGE = 2;
+    public static int REQUEST_CODE_WRITE_PERMISSION = 10;
+    public static int REQUEST_CODE_READ_PERMISSION = 11;
     String nameUriBackground = "Uri";
     String IMAGES_FOLDER_NAME = "Landing";
     String strIndexName = "index";
@@ -196,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
         Log.i(LogFunction, "onCreate");
+        CheckPermission();
         initLayout();
         LoadDataBegin();
         btnLoadData.setOnClickListener(new View.OnClickListener() {
@@ -492,7 +495,6 @@ public class MainActivity extends AppCompatActivity {
         //Setting the ArrayAdapter data on the Spinner
         spnShowDataSaved.setAdapter(spnAdapter);
 
-
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         editor = sharedPreferences.edit();
         flagSyncImage = sharedPreferences.getBoolean(syncImage, false);
@@ -529,6 +531,17 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("filename_path", "cant convert");
                 }
             }
+        }
+    }
+
+    void CheckPermission(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_PERMISSION);
+        }
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_CODE_READ_PERMISSION);
         }
     }
 
@@ -847,6 +860,14 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Permission denied!", Toast.LENGTH_SHORT).show();
             }
         }
+        if(requestCode == REQUEST_CODE_WRITE_PERMISSION){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+//                Toast.makeText(MainActivity.this, "Permission write granted!", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(MainActivity.this, "Permission write denied!", Toast.LENGTH_SHORT).show();
+//                finish();
+            }
+        }
     }
 
     @Override
@@ -869,23 +890,6 @@ public class MainActivity extends AppCompatActivity {
                         imgSetSavedFragmentBackground.setImageBitmap(bitmap);
                         imgDataSavedFragmentBackground.setImageBitmap(bitmap);
 
-//                        saveBitmap(bitmap);
-//                        saveImage(bitmap, nameImageBackGround );
-//                        String fileName = Environment.getExternalStorageDirectory().getAbsolutePath() + "/background.png";
-//                        Log.d("filename_path", fileName);
-//                        File sd = Environment.getExternalStorageDirectory();
-//                        File dest = new File(sd, fileName);
-//
-////                        bitmap = (Bitmap)data.getExtras().get("data");
-//                        try {
-//                            FileOutputStream out = new FileOutputStream(dest);
-//                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-//                            out.flush();
-//                            out.close();
-//                        } catch (Exception e) {
-//                            Log.d("filename_path", "Exception Write");
-//                            e.printStackTrace();
-//                        }
 
                     } catch (Exception exception){
 
