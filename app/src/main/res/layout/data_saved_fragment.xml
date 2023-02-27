@@ -15,8 +15,14 @@
     <ImageView
         android:id="@+id/imgBackFragmentDataSaved"
         android:background="@mipmap/icon_back"
-        android:layout_width="50dp"
-        android:layout_height="50dp"/>
+        android:layout_width="40dp"
+        android:layout_height="40dp"/>
+    <ImageView
+        android:layout_alignParentEnd="true"
+        android:id="@+id/imgLoadDataSettingLocal"
+        android:background="@mipmap/get_setting"
+        android:layout_width="40dp"
+        android:layout_height="40dp"/>
     <ListView
         android:id="@+id/lvDataSaved"
         android:layout_below="@+id/imgBackFragmentDataSaved"
