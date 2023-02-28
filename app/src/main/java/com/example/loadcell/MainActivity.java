@@ -154,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
     File fileSaveText;
     String file_folder_name_save_setting = "CGBalance";
     String file_name_save_setting = "CGBalance.txt";
+    String file_name_download_save_setting = "fileName";
     int MAX_NUMBER_SETTING = 20;
 
     private List<dataSaved> listDataSaved;
@@ -216,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 rlDataSavedFragment.setVisibility(View.VISIBLE);
-                updateDataToListViewSetting();
+                updateDataToListViewSetting(getDataSettingLocal());
             }
         });
 
@@ -283,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 rlSendRequestSaveName.setVisibility(View.VISIBLE);
-                updateDataToListViewSetting();
+                updateDataToListViewSetting(getDataSettingLocal());
                 int sub_device_id = 0;
                 spnAdapter.clear();
                 for(int i = 0; i < listDataSaved.size(); i++){
@@ -430,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     imgArrayShowNoseHeave.setVisibility(View.INVISIBLE);
                     imgArrayShowTailHeave.setVisibility(View.INVISIBLE);
-                    txtNotificationNoseTailHeavy.setText("The plane is balanced");
+                    txtNotificationNoseTailHeavy.setText("Balanced!");
                     txtNoticeAddOrRemove.setText("Remove");
                     txtNotificationWeightRemove.setText(String.valueOf((int)weightRemoveOrAdd));
                 }
@@ -581,11 +582,11 @@ public class MainActivity extends AppCompatActivity {
             //write data begin to local file
             saveTextFileToLocal(contentsLoadSettingLocalFile);
         }
-        updateDataToListViewSetting();
+        updateDataToListViewSetting(contentsLoadSettingLocalFile);
     }
 
-    void updateDataToListViewSetting(){
-        String contentsLoadSettingLocalFile = getDataSettingLocal();
+    boolean updateDataToListViewSetting(String data){
+        String contentsLoadSettingLocalFile = data;
         try {
             JSONArray jsonArraySetting = new JSONArray(contentsLoadSettingLocalFile);
             listDataSaved.clear();
@@ -600,9 +601,11 @@ public class MainActivity extends AppCompatActivity {
             lvDataSaved.invalidateViews();
             lvDataSaved.refreshDrawableState();
         } catch (JSONException e) {
-            Toast.makeText(MainActivity.this, "Can,t load data setting", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Can't load data setting", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     String getDataSettingLocal(){
@@ -635,47 +638,55 @@ public class MainActivity extends AppCompatActivity {
             try {
                 fos.write(content.getBytes());
                 fos.close();
-                Toast.makeText(MainActivity.this, "save!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "save!", Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
                 e.printStackTrace();
-                Toast.makeText(MainActivity.this, "error save!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "error save!", Toast.LENGTH_SHORT).show();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            Toast.makeText(MainActivity.this, "file not found!", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(MainActivity.this, "file not found!", Toast.LENGTH_SHORT).show();
         }
     }
+
     public void saveTextFileToDownloadFolder(String content){
         File fileDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),file_folder_name_save_setting);
-//        Log.i("jsonObject put", fileDir.getName());
-//        Log.i("jsonObject put", fileDir.getAbsolutePath());
-
-        if(fileDir.exists()){
-            fileDir.delete();
-            if(fileDir.exists()){
-                try {
-                    fileDir.getCanonicalFile().delete();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                if(fileDir.exists()){
-                    getApplicationContext().deleteFile(fileDir.getName());
-                }
-            }
-        }
         if (!fileDir.exists())
         {
             fileDir.mkdirs();
         }
-        File fileSaveTextDownload = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                + "/" + file_folder_name_save_setting,file_name_save_setting);
-        if(fileSaveTextDownload.exists()){
-//            Toast.makeText(MainActivity.this, "exists!", Toast.LENGTH_SHORT).show();
-            fileSaveTextDownload.deleteOnExit();
-            fileSaveTextDownload.delete();
-//            getApplicationContext().deleteFile(fileSaveTextDownload.getAbsolutePath());
-//            getApplicationContext().deleteFile("/Download/CGBalance/CGBalance.txt");
+        File fileSaveTextDownload;
+        String file_name = sharedPreferences.getString(file_name_download_save_setting, "");
+        if(file_name.equals("")){
+            int count = 0;
+            while(true){
+                fileSaveTextDownload = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        + "/" + file_folder_name_save_setting,file_folder_name_save_setting + String.valueOf(count)+".txt");
+                if(!fileSaveTextDownload.exists()){
+                    editor.putString(file_name_download_save_setting, file_folder_name_save_setting + String.valueOf(count)+".txt");
+                    break;
+                }
+                if(fileSaveTextDownload.exists()){
+                    if(fileSaveTextDownload.delete()){
+                        editor.putString(file_name_download_save_setting, file_folder_name_save_setting + String.valueOf(count)+".txt");
+                        break;
+                    }
+                    Log.i("jsonObject put", fileSaveTextDownload.getAbsolutePath());
+                }
+                count++;
+            }
+        }
+        else{
+            fileSaveTextDownload = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    + "/" + file_folder_name_save_setting,file_name);
+        }
 
+        if(!fileSaveTextDownload.exists()){
+            try {
+                fileSaveTextDownload.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         try {
             FileOutputStream fos = new FileOutputStream(fileSaveTextDownload);
@@ -902,8 +913,9 @@ public class MainActivity extends AppCompatActivity {
                 Uri uri = data.getData();
                 byte[] bytes = getBytesFromUri(getApplicationContext(), uri);
                 String dataFile = new String(bytes);
-                saveTextFileToLocal(dataFile);
-                updateDataToListViewSetting();
+                if(updateDataToListViewSetting(dataFile)){
+                    saveTextFileToLocal(dataFile);
+                }
             }
         }
     }
